@@ -21,8 +21,10 @@ struct WorkoutCalendarView: View {
     @Query private var records: [WorkoutRecord]
 
     private let calendar = Calendar.current
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
     private let weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"]
+    /// 日付セルの一辺のサイズ
+    private let cellSize: CGFloat = 40
 
     // 表示月のワークアウト日セット
     private var workoutDays: Set<Date> {
@@ -110,7 +112,7 @@ struct WorkoutCalendarView: View {
             }
 
             // ─── 日付グリッド ──────────────────────────────────
-            LazyVGrid(columns: columns, spacing: 6) {
+            LazyVGrid(columns: columns, spacing: 10) {
                 ForEach(Array(gridDays.enumerated()), id: \.offset) { _, date in
                     if let date {
                         let hasWorkout = workoutDays.contains(calendar.startOfDay(for: date))
@@ -122,13 +124,14 @@ struct WorkoutCalendarView: View {
                             DayCell(
                                 date: date,
                                 hasWorkout: hasWorkout,
-                                isToday: calendar.isDateInToday(date)
+                                isToday: calendar.isDateInToday(date),
+                                size: cellSize
                             )
                         }
                         .buttonStyle(.plain)
                     } else {
                         Color.clear
-                            .aspectRatio(1, contentMode: .fit)
+                            .frame(width: cellSize, height: cellSize)
                     }
                 }
             }
@@ -158,6 +161,7 @@ private struct DayCell: View {
     let date: Date
     let hasWorkout: Bool
     let isToday: Bool
+    var size: CGFloat = 40
 
     private var dayNumber: String {
         "\(Calendar.current.component(.day, from: date))"
@@ -184,7 +188,7 @@ private struct DayCell: View {
                         : AppColor.onBrand.opacity(0.55)
                 )
         }
-        .aspectRatio(1, contentMode: .fit)
+        .frame(width: size, height: size)
     }
 }
 
