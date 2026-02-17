@@ -13,13 +13,15 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            Color.black
+            // 背景：メインカラー #0067c0
+            Color(red: 0 / 255, green: 103 / 255, blue: 192 / 255)
                 .ignoresSafeArea()
 
             Text("KASACLE")
                 .font(.system(size: 48, weight: .black, design: .default))
                 .tracking(8)
-                .foregroundStyle(.white)
+                // 薄い水色（onBrand 相当）
+                .foregroundStyle(Color(red: 235 / 255, green: 247 / 255, blue: 255 / 255).opacity(0.75))
                 .opacity(titleOpacity)
                 .scaleEffect(titleScale)
         }
