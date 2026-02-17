@@ -69,7 +69,7 @@ struct WorkoutCalendarView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppColor.onBrand)
+                        .foregroundStyle(AppColor.brand)
                         .padding(8)
                 }
 
@@ -77,7 +77,7 @@ struct WorkoutCalendarView: View {
 
                 Text(monthTitle)
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(AppColor.onBrand)
+                    .foregroundStyle(AppColor.onSurface)
 
                 Spacer()
 
@@ -86,7 +86,7 @@ struct WorkoutCalendarView: View {
                 } label: {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(isCurrentMonth ? AppColor.onBrand.opacity(0.3) : AppColor.onBrand)
+                        .foregroundStyle(isCurrentMonth ? AppColor.onSurface.opacity(0.25) : AppColor.brand)
                         .padding(8)
                 }
                 .disabled(isCurrentMonth)
@@ -101,10 +101,10 @@ struct WorkoutCalendarView: View {
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(
                             label == "日"
-                                ? Color(red: 1, green: 0.55, blue: 0.55).opacity(0.85)
+                                ? Color(red: 0.9, green: 0.25, blue: 0.25).opacity(0.85)
                                 : label == "土"
-                                    ? Color(red: 0.55, green: 0.85, blue: 1).opacity(0.85)
-                                    : AppColor.onBrand.opacity(0.6)
+                                    ? Color(red: 0.10, green: 0.45, blue: 0.85).opacity(0.85)
+                                    : AppColor.onSurface.opacity(0.5)
                         )
                         .frame(maxWidth: .infinity)
                         .padding(.bottom, 8)
@@ -139,7 +139,11 @@ struct WorkoutCalendarView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white.opacity(0.12))
+                .fill(AppColor.onSurface.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(AppColor.onSurface.opacity(0.08), lineWidth: 1)
+                )
         )
     }
 
@@ -170,14 +174,14 @@ private struct DayCell: View {
     var body: some View {
         ZStack {
             if hasWorkout {
-                // 実績あり：メインカラーより少し明るい円
+                // 実績あり：ブランドカラーの円
                 Circle()
-                    .fill(Color.white.opacity(0.25))
+                    .fill(AppColor.brand)
             }
             if isToday {
                 // 今日：枠線
                 Circle()
-                    .strokeBorder(AppColor.onBrand, lineWidth: 1.5)
+                    .strokeBorder(AppColor.brand, lineWidth: 1.5)
             }
 
             Text(dayNumber)
@@ -185,7 +189,7 @@ private struct DayCell: View {
                 .foregroundStyle(
                     hasWorkout
                         ? AppColor.onBrand
-                        : AppColor.onBrand.opacity(0.55)
+                        : AppColor.onSurface.opacity(0.6)
                 )
         }
         .frame(width: size, height: size)
@@ -195,6 +199,6 @@ private struct DayCell: View {
 #Preview {
     WorkoutCalendarView()
         .padding()
-        .background(AppColor.brand)
+        .background(Color.white)
         .modelContainer(for: WorkoutRecord.self, inMemory: true)
 }

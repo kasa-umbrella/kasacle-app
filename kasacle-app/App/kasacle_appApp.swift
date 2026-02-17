@@ -14,6 +14,6 @@ struct kasacle_appApp: App {
         WindowGroup {
             RootView()
         }
-        .modelContainer(for: [WorkoutRecord.self, WorkoutSession.self, WorkoutSet.self])
+        .modelContainer(for: [WorkoutRecord.self, WorkoutSession.self, WorkoutSet.self, CustomExercise.self])
     }
 }

@@ -28,6 +28,7 @@ private enum WorkoutPhase: Equatable {
 struct WorkoutStartView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \CustomExercise.order) private var allExercises: [CustomExercise]
 
     // ─── 選択状態 ───────────────────────────────────────
     @State private var selectedGroup: MuscleGroup? = nil
@@ -56,6 +57,7 @@ struct WorkoutStartView: View {
                 SetupView(
                     selectedGroup: $selectedGroup,
                     selectedExercise: $selectedExercise,
+                    allExercises: allExercises,
                     onStart: startFirstSet
                 )
 
@@ -99,14 +101,7 @@ struct WorkoutStartView: View {
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(phase != .setup)
-        .toolbar {
-            if phase == .setup {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("閉じる") { dismiss() }
-                        .foregroundStyle(AppColor.onBrand)
-                }
-            }
-        }
+        .onAppear { seedDefaultExercises(context: context) }
         .onDisappear { stopAllTimers() }
     }
 
@@ -210,9 +205,17 @@ struct WorkoutStartView: View {
 private struct SetupView: View {
     @Binding var selectedGroup: MuscleGroup?
     @Binding var selectedExercise: String?
+    let allExercises: [CustomExercise]
     let onStart: () -> Void
 
     var canStart: Bool { selectedGroup != nil && selectedExercise != nil }
+
+    private var exercisesForGroup: [CustomExercise] {
+        guard let group = selectedGroup else { return [] }
+        return allExercises
+            .filter { $0.muscleGroupName == group.name }
+            .sorted { $0.order < $1.order }
+    }
 
     var body: some View {
         ScrollView {
@@ -237,15 +240,15 @@ private struct SetupView: View {
                 }
 
                 // ─── 種目選択 ─────────────────────────────────
-                if let group = selectedGroup {
+                if selectedGroup != nil {
                     SectionCard(title: "種目を選ぶ", icon: "dumbbell.fill") {
                         VStack(spacing: 8) {
-                            ForEach(group.exercises, id: \.self) { ex in
+                            ForEach(exercisesForGroup) { ex in
                                 ExerciseRow(
-                                    name: ex,
-                                    isSelected: selectedExercise == ex
+                                    name: ex.exerciseName,
+                                    isSelected: selectedExercise == ex.exerciseName
                                 ) {
-                                    selectedExercise = ex
+                                    selectedExercise = ex.exerciseName
                                 }
                             }
                         }
@@ -257,12 +260,12 @@ private struct SetupView: View {
                 Button(action: onStart) {
                     Label("開始する", systemImage: "flame.fill")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(canStart ? AppColor.onBrand : AppColor.onBrand.opacity(0.35))
+                        .foregroundStyle(canStart ? AppColor.onBrand : AppColor.onSurface.opacity(0.35))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.white.opacity(canStart ? 0.22 : 0.08))
+                                .fill(canStart ? AppColor.brand : AppColor.onSurface.opacity(0.07))
                         )
                 }
                 .disabled(!canStart)
@@ -293,17 +296,17 @@ private struct TrackingView: View {
             // セット番号
             Text("セット \(setNumber)")
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                .foregroundStyle(AppColor.onSurface.opacity(0.5))
 
             // 種目名
             Text(exerciseName)
                 .font(.system(size: 26, weight: .black))
-                .foregroundStyle(AppColor.onBrand)
+                .foregroundStyle(AppColor.onSurface)
 
             // タイマー表示
             Text(formatTime(elapsed))
                 .font(.system(size: 72, weight: .black, design: .monospaced))
-                .foregroundStyle(AppColor.onBrand)
+                .foregroundStyle(AppColor.brand)
                 .contentTransition(.numericText())
                 .animation(.linear(duration: 0.3), value: elapsed)
 
@@ -319,19 +322,19 @@ private struct TrackingView: View {
                         .padding(.vertical, 18)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.white.opacity(0.20))
+                                .fill(AppColor.brand)
                         )
                 }
 
                 Button(action: onFinish) {
                     Label("トレーニング終了", systemImage: "stop.circle.fill")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                        .foregroundStyle(AppColor.onSurface.opacity(0.6))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.white.opacity(0.10))
+                                .fill(AppColor.onSurface.opacity(0.07))
                         )
                 }
             }
@@ -386,7 +389,7 @@ private struct LoggingView: View {
                         StepperButton(icon: "minus", action: { if reps > 1 { reps -= 1 } })
                         Text("\(reps)")
                             .font(.system(size: 48, weight: .black, design: .rounded))
-                            .foregroundStyle(AppColor.onBrand)
+                            .foregroundStyle(AppColor.onSurface)
                             .frame(minWidth: 80)
                             .contentTransition(.numericText())
                             .animation(.spring(duration: 0.2), value: reps)
@@ -401,21 +404,21 @@ private struct LoggingView: View {
                         Toggle(isOn: $isBodyweight) {
                             Label("自重（重量なし）", systemImage: "figure.stand")
                                 .font(.system(size: 15, weight: .medium))
-                                .foregroundStyle(AppColor.onBrand)
+                                .foregroundStyle(AppColor.onSurface)
                         }
-                        .tint(Color.white.opacity(0.6))
+                        .tint(AppColor.brand)
 
                         if !isBodyweight {
                             HStack(spacing: 8) {
                                 TextField("0.0", text: $weight)
                                     .keyboardType(.decimalPad)
                                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                                    .foregroundStyle(AppColor.onBrand)
+                                    .foregroundStyle(AppColor.onSurface)
                                     .multilineTextAlignment(.trailing)
                                     .frame(maxWidth: .infinity)
                                 Text("kg")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                                    .foregroundStyle(AppColor.onSurface.opacity(0.5))
                             }
                             .padding(.horizontal, 8)
                         }
@@ -431,12 +434,12 @@ private struct LoggingView: View {
                         systemImage: isFinishing ? "checkmark.circle.fill" : "arrow.right.circle.fill"
                     )
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(canConfirm ? AppColor.onBrand : AppColor.onBrand.opacity(0.35))
+                    .foregroundStyle(canConfirm ? AppColor.onBrand : AppColor.onSurface.opacity(0.35))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.white.opacity(canConfirm ? 0.22 : 0.08))
+                            .fill(canConfirm ? AppColor.brand : AppColor.onSurface.opacity(0.07))
                     )
                 }
                 .disabled(!canConfirm)
@@ -462,17 +465,17 @@ private struct IntervalView: View {
 
             Text("インターバル")
                 .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                .foregroundStyle(AppColor.onSurface.opacity(0.5))
 
             Text(formatTime(intervalSeconds))
                 .font(.system(size: 72, weight: .black, design: .monospaced))
-                .foregroundStyle(AppColor.onBrand)
+                .foregroundStyle(AppColor.brand)
                 .contentTransition(.numericText())
                 .animation(.linear(duration: 0.3), value: intervalSeconds)
 
             Text("休憩中…")
                 .font(.system(size: 15))
-                .foregroundStyle(AppColor.onBrand.opacity(0.5))
+                .foregroundStyle(AppColor.onSurface.opacity(0.4))
 
             Spacer()
 
@@ -484,7 +487,7 @@ private struct IntervalView: View {
                     .padding(.vertical, 20)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.white.opacity(0.22))
+                            .fill(AppColor.brand)
                     )
             }
             .padding(.horizontal, 20)
@@ -512,13 +515,13 @@ private struct SummaryView: View {
                 VStack(spacing: 6) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 52))
-                        .foregroundStyle(AppColor.onBrand)
+                        .foregroundStyle(AppColor.brand)
                     Text("お疲れ様でした！")
                         .font(.system(size: 22, weight: .black))
-                        .foregroundStyle(AppColor.onBrand)
+                        .foregroundStyle(AppColor.onSurface)
                     Text("\(muscleGroup) / \(exerciseName)")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                        .foregroundStyle(AppColor.onSurface.opacity(0.5))
                 }
                 .padding(.top, 16)
 
@@ -536,30 +539,30 @@ private struct SummaryView: View {
                             HStack {
                                 Text("セット \(set.setNumber)")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                                    .foregroundStyle(AppColor.onSurface.opacity(0.5))
                                 Spacer()
                                 if let w = set.weightKg {
                                     Text("\(w, specifier: "%.1f") kg")
-                                        .foregroundStyle(AppColor.onBrand)
+                                        .foregroundStyle(AppColor.onSurface)
                                 } else {
                                     Text("自重")
-                                        .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                                        .foregroundStyle(AppColor.onSurface.opacity(0.6))
                                 }
                                 Text("×")
-                                    .foregroundStyle(AppColor.onBrand.opacity(0.4))
+                                    .foregroundStyle(AppColor.onSurface.opacity(0.35))
                                     .padding(.horizontal, 4)
                                 Text("\(set.reps) 回")
-                                    .foregroundStyle(AppColor.onBrand)
+                                    .foregroundStyle(AppColor.onSurface)
                                 Text(formatTime(set.durationSeconds))
                                     .font(.system(size: 13, design: .monospaced))
-                                    .foregroundStyle(AppColor.onBrand.opacity(0.5))
+                                    .foregroundStyle(AppColor.onSurface.opacity(0.4))
                                     .padding(.leading, 8)
                             }
                             .font(.system(size: 15, weight: .medium))
                             .padding(.vertical, 10)
 
                             if i < sets.count - 1 {
-                                Divider().overlay(AppColor.onBrand.opacity(0.15))
+                                Divider().overlay(AppColor.onSurface.opacity(0.10))
                             }
                         }
                     }
@@ -575,14 +578,14 @@ private struct SummaryView: View {
                             .padding(.vertical, 18)
                             .background(
                                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .fill(Color.white.opacity(0.22))
+                                    .fill(AppColor.brand)
                             )
                     }
 
                     Button(action: onDiscard) {
                         Text("保存せず終了")
                             .font(.system(size: 15))
-                            .foregroundStyle(AppColor.onBrand.opacity(0.45))
+                            .foregroundStyle(AppColor.onSurface.opacity(0.4))
                     }
                 }
 
@@ -604,7 +607,7 @@ private struct SectionCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 14) {
             Label(title, systemImage: icon)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                .foregroundStyle(AppColor.onSurface.opacity(0.5))
 
             content()
         }
@@ -612,7 +615,11 @@ private struct SectionCard<Content: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white.opacity(0.12))
+                .fill(AppColor.onSurface.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .strokeBorder(AppColor.onSurface.opacity(0.08), lineWidth: 1)
+                )
         )
     }
 }
@@ -627,19 +634,20 @@ private struct MuscleGroupChip: View {
             VStack(spacing: 6) {
                 Image(systemName: group.icon)
                     .font(.system(size: 22))
+                    .frame(height: 28)
                 Text(group.name)
                     .font(.system(size: 13, weight: .semibold))
             }
-            .foregroundStyle(isSelected ? AppColor.onBrand : AppColor.onBrand.opacity(0.6))
+            .foregroundStyle(isSelected ? AppColor.onBrand : AppColor.onSurface.opacity(0.6))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(isSelected ? 0.25 : 0.08))
+                    .fill(isSelected ? AppColor.brand : AppColor.onSurface.opacity(0.05))
                     .overlay(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .strokeBorder(
-                                isSelected ? AppColor.onBrand.opacity(0.5) : Color.clear,
+                                isSelected ? AppColor.brand : AppColor.onSurface.opacity(0.10),
                                 lineWidth: 1.5
                             )
                     )
@@ -660,18 +668,18 @@ private struct ExerciseRow: View {
             HStack {
                 Text(name)
                     .font(.system(size: 16, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(isSelected ? AppColor.onBrand : AppColor.onBrand.opacity(0.7))
+                    .foregroundStyle(isSelected ? AppColor.brand : AppColor.onSurface.opacity(0.7))
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(AppColor.onBrand)
+                        .foregroundStyle(AppColor.brand)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 13)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(isSelected ? 0.18 : 0.06))
+                    .fill(isSelected ? AppColor.brand.opacity(0.08) : AppColor.onSurface.opacity(0.04))
             )
             .animation(.easeInOut(duration: 0.15), value: isSelected)
         }
@@ -687,10 +695,10 @@ private struct StepperButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(AppColor.onBrand)
+                .foregroundStyle(AppColor.brand)
                 .frame(width: 52, height: 52)
                 .background(
-                    Circle().fill(Color.white.opacity(0.15))
+                    Circle().fill(AppColor.brand.opacity(0.10))
                 )
         }
         .buttonStyle(.plain)
@@ -706,19 +714,23 @@ private struct InfoBadge: View {
         VStack(spacing: 4) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                .foregroundStyle(AppColor.onSurface.opacity(0.45))
             Text(value)
                 .font(.system(size: 18, weight: .black, design: .rounded))
-                .foregroundStyle(AppColor.onBrand)
+                .foregroundStyle(AppColor.onSurface)
             Text(label)
                 .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(AppColor.onBrand.opacity(0.5))
+                .foregroundStyle(AppColor.onSurface.opacity(0.45))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.white.opacity(0.10))
+                .fill(AppColor.onSurface.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(AppColor.onSurface.opacity(0.08), lineWidth: 1)
+                )
         )
     }
 }
