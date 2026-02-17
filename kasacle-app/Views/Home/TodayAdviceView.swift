@@ -54,7 +54,7 @@ struct TodayAdviceView: View {
             // 日付
             Text(Self.dateFormatter.string(from: .now))
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                .foregroundStyle(AppColor.onBrand.opacity(0.7))
 
             HStack(alignment: .top, spacing: 14) {
                 // アイコン
@@ -66,7 +66,7 @@ struct TodayAdviceView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("今日のアドバイス")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                        .foregroundStyle(AppColor.onBrand.opacity(0.8))
                     Text(advice.message)
                         .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(AppColor.onBrand)
@@ -79,7 +79,8 @@ struct TodayAdviceView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white.opacity(0.12))
+                .fill(AppColor.brand)
+                .shadow(color: AppColor.brand.opacity(0.35), radius: 12, x: 0, y: 6)
         )
     }
 }
@@ -87,5 +88,5 @@ struct TodayAdviceView: View {
 #Preview {
     TodayAdviceView()
         .padding()
-        .background(AppColor.brand)
+        .background(Color.white)
 }

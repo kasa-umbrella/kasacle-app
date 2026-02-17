@@ -42,11 +42,11 @@ struct DayWorkoutDetailView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "calendar.badge.exclamationmark")
                         .font(.system(size: 56))
-                        .foregroundStyle(AppColor.onBrand.opacity(0.4))
+                        .foregroundStyle(AppColor.onSurface.opacity(0.25))
 
                     Text("この日の記録はありません")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                        .foregroundStyle(AppColor.onSurface.opacity(0.45))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -79,7 +79,7 @@ private struct WorkoutRecordCard: View {
             if record.sessions.isEmpty {
                 Text("記録なし")
                     .font(.system(size: 15))
-                    .foregroundStyle(AppColor.onBrand.opacity(0.4))
+                    .foregroundStyle(AppColor.onSurface.opacity(0.35))
                     .italic()
             } else {
                 ForEach(record.sessions) { session in
@@ -90,7 +90,11 @@ private struct WorkoutRecordCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.12))
+                .fill(AppColor.onSurface.opacity(0.04))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .strokeBorder(AppColor.onSurface.opacity(0.08), lineWidth: 1)
+                )
         )
     }
 }
@@ -113,42 +117,42 @@ private struct WorkoutSessionRow: View {
             HStack(spacing: 6) {
                 Text(session.exerciseName)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(AppColor.onBrand)
+                    .foregroundStyle(AppColor.onSurface)
                 Spacer()
                 Image(systemName: "clock.fill")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                    .foregroundStyle(AppColor.onSurface.opacity(0.45))
                 Text(timeText)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                    .foregroundStyle(AppColor.onSurface.opacity(0.45))
             }
 
             // 部位バッジ
             Text(session.muscleGroup)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                .foregroundStyle(AppColor.brand)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.15))
+                        .fill(AppColor.brand.opacity(0.10))
                 )
 
             Divider()
-                .overlay(AppColor.onBrand.opacity(0.2))
+                .overlay(AppColor.onSurface.opacity(0.1))
 
             // セット一覧
             if session.sets.isEmpty {
                 Text("セットなし")
                     .font(.system(size: 13))
-                    .foregroundStyle(AppColor.onBrand.opacity(0.4))
+                    .foregroundStyle(AppColor.onSurface.opacity(0.35))
                     .italic()
             } else {
                 ForEach(session.sets.sorted { $0.setNumber < $1.setNumber }) { set in
                     HStack {
                         Text("セット \(set.setNumber)")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                            .foregroundStyle(AppColor.onSurface.opacity(0.5))
                         Spacer()
                         if let kg = set.weightKg {
                             Text("\(kg, specifier: "%.1f") kg × \(set.reps) 回")
@@ -157,10 +161,10 @@ private struct WorkoutSessionRow: View {
                         }
                         Text("(\(set.durationSeconds)秒)")
                             .font(.system(size: 12))
-                            .foregroundStyle(AppColor.onBrand.opacity(0.5))
+                            .foregroundStyle(AppColor.onSurface.opacity(0.4))
                     }
                     .font(.system(size: 13))
-                    .foregroundStyle(AppColor.onBrand)
+                    .foregroundStyle(AppColor.onSurface)
                 }
             }
         }

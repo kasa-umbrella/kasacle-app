@@ -29,12 +29,12 @@ struct MainView: View {
                             Text("KASACLE")
                                 .font(.system(size: 36, weight: .black))
                                 .tracking(8)
-                                .foregroundStyle(AppColor.onBrand)
+                                .foregroundStyle(AppColor.brand)
 
                             Text("筋トレ管理")
                                 .font(.system(size: 13, weight: .medium))
                                 .tracking(4)
-                                .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                                .foregroundStyle(AppColor.onSurface.opacity(0.5))
                         }
                         .padding(.top, 16)
 
@@ -55,17 +55,7 @@ struct MainView: View {
                             }
 
                             NavigationLink {
-                                // TODO: 記録一覧画面
-                                Text("記録一覧")
-                                    .navigationTitle("記録")
-                            } label: {
-                                MenuButton(title: "記録を見る", icon: "chart.bar.fill", isPrimary: false)
-                            }
-
-                            NavigationLink {
-                                // TODO: 設定画面
-                                Text("設定")
-                                    .navigationTitle("設定")
+                                SettingsView()
                             } label: {
                                 MenuButton(title: "設定", icon: "gearshape.fill", isPrimary: false)
                             }
@@ -103,17 +93,17 @@ private struct MenuButton: View {
                 .font(.system(size: 14, weight: .semibold))
                 .opacity(0.5)
         }
-        .foregroundStyle(AppColor.onBrand)
+        .foregroundStyle(isPrimary ? AppColor.onBrand : AppColor.onSurface)
         .padding(.horizontal, 24)
         .padding(.vertical, 18)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(
                     isPrimary
-                        ? Color.white.opacity(0.22)
-                        : Color.white.opacity(0.10)
+                        ? AppColor.brand
+                        : AppColor.onSurface.opacity(0.06)
                 )
-                .shadow(color: AppColor.onBackground.opacity(0.15), radius: 8, x: 0, y: 4)
+                .shadow(color: AppColor.onBackground.opacity(0.10), radius: 8, x: 0, y: 4)
         )
     }
 }

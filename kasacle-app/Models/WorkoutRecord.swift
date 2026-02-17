@@ -73,6 +73,24 @@ final class WorkoutSet {
     }
 }
 
+// MARK: - CustomExercise（永続化される種目データ）
+
+@Model
+final class CustomExercise {
+    /// 部位名（例: "胸", "背中"）
+    var muscleGroupName: String
+    /// 種目名（例: "ベンチプレス"）
+    var exerciseName: String
+    /// 表示順
+    var order: Int
+
+    init(muscleGroupName: String, exerciseName: String, order: Int) {
+        self.muscleGroupName = muscleGroupName
+        self.exerciseName = exerciseName
+        self.order = order
+    }
+}
+
 // MARK: - 部位・種目マスタ
 
 struct MuscleGroup: Identifiable {
@@ -108,3 +126,22 @@ let muscleGroups: [MuscleGroup] = [
         "ロシアンツイスト", "アブローラー", "ハンギングニーレイズ"
     ]),
 ]
+
+/// デフォルト種目をシードする
+func seedDefaultExercises(context: ModelContext) {
+    let descriptor = FetchDescriptor<CustomExercise>()
+    let count = (try? context.fetchCount(descriptor)) ?? 0
+    guard count == 0 else { return }
+
+    for group in muscleGroups {
+        for (i, exercise) in group.exercises.enumerated() {
+            let item = CustomExercise(
+                muscleGroupName: group.name,
+                exerciseName: exercise,
+                order: i
+            )
+            context.insert(item)
+        }
+    }
+    try? context.save()
+}
