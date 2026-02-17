@@ -49,9 +49,7 @@ struct MainView: View {
                         // ─── メニューボタン群 ─────────────────────
                         VStack(spacing: 14) {
                             NavigationLink {
-                                // TODO: ワークアウト開始画面
-                                Text("ワークアウト開始")
-                                    .navigationTitle("ワークアウト")
+                                WorkoutStartView()
                             } label: {
                                 MenuButton(title: "ワークアウト開始", icon: "flame.fill", isPrimary: true)
                             }
