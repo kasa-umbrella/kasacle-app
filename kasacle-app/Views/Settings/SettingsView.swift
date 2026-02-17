@@ -6,178 +6,144 @@
 //
 
 import SwiftUI
+import SwiftData
+
+// MARK: - SettingsView
 
 struct SettingsView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var settings = UserSettings.shared
-
-    @State private var weightText: String = ""
-    @State private var heightText: String = ""
-    @State private var showingSaveConfirmation = false
+    @Environment(\.modelContext) private var context
+    @Query private var allExercises: [CustomExercise]
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                AppColor.appBackground
-                    .ignoresSafeArea()
+        ZStack {
+            AppColor.appBackground.ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // ── プロフィール設定 ──────────────────
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("プロフィール")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundStyle(AppColor.onBrand)
-
-                            // 体重入力
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("体重", systemImage: "scalemass.fill")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(AppColor.onBrand.opacity(0.7))
-
-                                HStack(spacing: 12) {
-                                    TextField("例: 70", text: $weightText)
-                                        .keyboardType(.decimalPad)
-                                        .font(.system(size: 16))
-                                        .foregroundStyle(AppColor.onBackground)
-                                        .padding(12)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                                .fill(Color.white)
-                                        )
-
-                                    Text("kg")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundStyle(AppColor.onBrand.opacity(0.7))
-                                }
-                            }
-
-                            // 身長入力
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("身長", systemImage: "ruler.fill")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(AppColor.onBrand.opacity(0.7))
-
-                                HStack(spacing: 12) {
-                                    TextField("例: 170", text: $heightText)
-                                        .keyboardType(.decimalPad)
-                                        .font(.system(size: 16))
-                                        .foregroundStyle(AppColor.onBackground)
-                                        .padding(12)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                                .fill(Color.white)
-                                        )
-
-                                    Text("cm")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundStyle(AppColor.onBrand.opacity(0.7))
-                                }
-                            }
-                        }
-                        .padding(20)
-                        .background(
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(Color.white.opacity(0.12))
-                        )
-
-                        // ── BMI情報 ──────────────────────────
-                        if let bmi = settings.bmi {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("BMI")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundStyle(AppColor.onBrand)
-
-                                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                    Text(String(format: "%.1f", bmi))
-                                        .font(.system(size: 40, weight: .bold))
-                                        .foregroundStyle(AppColor.onBrand)
-
-                                    Text(settings.bmiCategory)
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundStyle(AppColor.onBrand.opacity(0.7))
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                                .fill(Color.white.opacity(0.2))
-                                        )
-                                }
-
-                                Text("BMI = 体重(kg) ÷ 身長(m)²")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(AppColor.onBrand.opacity(0.5))
-                            }
-                            .padding(20)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .fill(Color.white.opacity(0.12))
-                            )
-                        }
-
-                        // ── 保存ボタン ────────────────────────
-                        Button {
-                            saveSettings()
+            List {
+                Section {
+                    ForEach(muscleGroups) { group in
+                        NavigationLink {
+                            ExerciseListView(muscleGroupName: group.name)
                         } label: {
-                            Text("保存")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundStyle(AppColor.brand)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(Color.white)
-                                )
+                            HStack(spacing: 12) {
+                                Image(systemName: group.icon)
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(AppColor.brand)
+                                    .frame(width: 28)
+                                Text(group.name)
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundStyle(AppColor.onSurface)
+                                Spacer()
+                                Text("\(exerciseCount(for: group.name))種目")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(AppColor.onSurface.opacity(0.4))
+                            }
                         }
-                        .padding(.top, 8)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 32)
+                } header: {
+                    Text("種目の管理")
                 }
             }
-            .navigationTitle("設定")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("閉じる") {
-                        dismiss()
-                    }
-                    .foregroundStyle(AppColor.onBrand)
-                }
-            }
-            .onAppear {
-                loadSettings()
-            }
-            .alert("保存完了", isPresented: $showingSaveConfirmation) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("設定を保存しました")
-            }
+            .scrollContentBackground(.hidden)
         }
+        .navigationTitle("設定")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear { seedDefaultExercises(context: context) }
     }
 
-    private func loadSettings() {
-        if settings.weight > 0 {
-            weightText = String(format: "%.1f", settings.weight)
-        }
-        if settings.height > 0 {
-            heightText = String(format: "%.1f", settings.height)
-        }
-    }
-
-    private func saveSettings() {
-        if let weight = Double(weightText) {
-            settings.weight = weight
-        }
-        if let height = Double(heightText) {
-            settings.height = height
-        }
-        showingSaveConfirmation = true
+    private func exerciseCount(for groupName: String) -> Int {
+        allExercises.filter { $0.muscleGroupName == groupName }.count
     }
 }
 
+// MARK: - ExerciseListView
+
+struct ExerciseListView: View {
+    let muscleGroupName: String
+
+    @Environment(\.modelContext) private var context
+    @Query private var allExercises: [CustomExercise]
+
+    @State private var showAddAlert = false
+    @State private var newExerciseName = ""
+
+    private var exercises: [CustomExercise] {
+        allExercises
+            .filter { $0.muscleGroupName == muscleGroupName }
+            .sorted { $0.order < $1.order }
+    }
+
+    var body: some View {
+        ZStack {
+            AppColor.appBackground.ignoresSafeArea()
+
+            List {
+                Section {
+                    ForEach(exercises) { exercise in
+                        HStack {
+                            Text(exercise.exerciseName)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(AppColor.onSurface)
+                        }
+                    }
+                    .onDelete(perform: deleteExercises)
+                } footer: {
+                    if exercises.isEmpty {
+                        Text("種目がありません。右上の＋ボタンから追加してください。")
+                            .foregroundStyle(AppColor.onSurface.opacity(0.4))
+                    }
+                }
+            }
+            .scrollContentBackground(.hidden)
+        }
+        .navigationTitle(muscleGroupName)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    newExerciseName = ""
+                    showAddAlert = true
+                } label: {
+                    Image(systemName: "plus")
+                        .foregroundStyle(AppColor.brand)
+                }
+            }
+        }
+        .alert("種目を追加", isPresented: $showAddAlert) {
+            TextField("種目名", text: $newExerciseName)
+            Button("追加") { addExercise() }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("\(muscleGroupName)に追加する種目名を入力してください。")
+        }
+    }
+
+    private func addExercise() {
+        let name = newExerciseName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty else { return }
+
+        let nextOrder = (exercises.map(\.order).max() ?? -1) + 1
+        let item = CustomExercise(
+            muscleGroupName: muscleGroupName,
+            exerciseName: name,
+            order: nextOrder
+        )
+        context.insert(item)
+        try? context.save()
+    }
+
+    private func deleteExercises(at offsets: IndexSet) {
+        for index in offsets {
+            context.delete(exercises[index])
+        }
+        try? context.save()
+    }
+}
+
+// MARK: - Preview
+
 #Preview {
-    SettingsView()
+    NavigationStack {
+        SettingsView()
+    }
+    .modelContainer(for: [CustomExercise.self], inMemory: true)
 }
