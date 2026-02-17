@@ -11,6 +11,9 @@ import SwiftData
 // MARK: - MainView
 
 struct MainView: View {
+    /// カレンダーでタップされた日付（nilなら遷移しない）
+    @State private var selectedDate: Date? = nil
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -39,7 +42,9 @@ struct MainView: View {
                         TodayAdviceView()
 
                         // ─── ワークアウトカレンダー ───────────────
-                        WorkoutCalendarView()
+                        WorkoutCalendarView { tappedDate in
+                            selectedDate = tappedDate
+                        }
 
                         // ─── メニューボタン群 ─────────────────────
                         VStack(spacing: 14) {
@@ -74,6 +79,10 @@ struct MainView: View {
                 }
             }
             .navigationBarHidden(true)
+            // ─── カレンダータップ → 日別詳細画面へ ──────────
+            .navigationDestination(item: $selectedDate) { date in
+                DayWorkoutDetailView(date: date)
+            }
         }
     }
 }

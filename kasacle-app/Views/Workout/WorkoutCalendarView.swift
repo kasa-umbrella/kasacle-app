@@ -11,6 +11,9 @@ import SwiftData
 // MARK: - WorkoutCalendarView
 
 struct WorkoutCalendarView: View {
+    /// 日付がタップされたときに呼ばれるコールバック（記録がある日のみ）
+    var onDayTapped: ((Date) -> Void)? = nil
+
     /// 表示中の年月
     @State private var displayMonth: Date = Calendar.current.startOfDay(for: .now)
 
@@ -110,11 +113,19 @@ struct WorkoutCalendarView: View {
             LazyVGrid(columns: columns, spacing: 6) {
                 ForEach(Array(gridDays.enumerated()), id: \.offset) { _, date in
                     if let date {
-                        DayCell(
-                            date: date,
-                            hasWorkout: workoutDays.contains(calendar.startOfDay(for: date)),
-                            isToday: calendar.isDateInToday(date)
-                        )
+                        let hasWorkout = workoutDays.contains(calendar.startOfDay(for: date))
+                        Button {
+                            if hasWorkout {
+                                onDayTapped?(calendar.startOfDay(for: date))
+                            }
+                        } label: {
+                            DayCell(
+                                date: date,
+                                hasWorkout: hasWorkout,
+                                isToday: calendar.isDateInToday(date)
+                            )
+                        }
+                        .buttonStyle(.plain)
                     } else {
                         Color.clear
                             .aspectRatio(1, contentMode: .fit)
