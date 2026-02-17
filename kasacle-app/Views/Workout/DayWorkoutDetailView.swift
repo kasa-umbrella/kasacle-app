@@ -73,40 +73,18 @@ struct DayWorkoutDetailView: View {
 private struct WorkoutRecordCard: View {
     let record: WorkoutRecord
 
-    private var timeText: String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "ja_JP")
-        f.dateFormat = "HH:mm"
-        return f.string(from: record.date)
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // 時刻バッジ
-            HStack(spacing: 6) {
-                Image(systemName: "clock.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(AppColor.onBrand.opacity(0.7))
-                Text(timeText)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(AppColor.onBrand.opacity(0.7))
-                Spacer()
-            }
-
-            Divider()
-                .overlay(AppColor.onBrand.opacity(0.2))
-
-            // メモ内容
-            if record.note.isEmpty {
-                Text("メモなし")
+            // セッションが空の場合
+            if record.sessions.isEmpty {
+                Text("記録なし")
                     .font(.system(size: 15))
                     .foregroundStyle(AppColor.onBrand.opacity(0.4))
                     .italic()
             } else {
-                Text(record.note)
-                    .font(.system(size: 15))
-                    .foregroundStyle(AppColor.onBrand)
-                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(record.sessions) { session in
+                    WorkoutSessionRow(session: session)
+                }
             }
         }
         .padding(16)
@@ -114,6 +92,78 @@ private struct WorkoutRecordCard: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color.white.opacity(0.12))
         )
+    }
+}
+
+// MARK: - WorkoutSessionRow
+
+private struct WorkoutSessionRow: View {
+    let session: WorkoutSession
+
+    private var timeText: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "HH:mm"
+        return f.string(from: session.startedAt)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // ヘッダー：種目名 + 時刻
+            HStack(spacing: 6) {
+                Text(session.exerciseName)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AppColor.onBrand)
+                Spacer()
+                Image(systemName: "clock.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppColor.onBrand.opacity(0.6))
+                Text(timeText)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(AppColor.onBrand.opacity(0.6))
+            }
+
+            // 部位バッジ
+            Text(session.muscleGroup)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(
+                    Capsule()
+                        .fill(Color.white.opacity(0.15))
+                )
+
+            Divider()
+                .overlay(AppColor.onBrand.opacity(0.2))
+
+            // セット一覧
+            if session.sets.isEmpty {
+                Text("セットなし")
+                    .font(.system(size: 13))
+                    .foregroundStyle(AppColor.onBrand.opacity(0.4))
+                    .italic()
+            } else {
+                ForEach(session.sets.sorted { $0.setNumber < $1.setNumber }) { set in
+                    HStack {
+                        Text("セット \(set.setNumber)")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                        Spacer()
+                        if let kg = set.weightKg {
+                            Text("\(kg, specifier: "%.1f") kg × \(set.reps) 回")
+                        } else {
+                            Text("自重 × \(set.reps) 回")
+                        }
+                        Text("(\(set.durationSeconds)秒)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(AppColor.onBrand.opacity(0.5))
+                    }
+                    .font(.system(size: 13))
+                    .foregroundStyle(AppColor.onBrand)
+                }
+            }
+        }
     }
 }
 

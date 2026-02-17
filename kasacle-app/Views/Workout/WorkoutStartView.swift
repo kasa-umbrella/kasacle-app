@@ -127,6 +127,10 @@ struct WorkoutStartView: View {
     }
 
     private func startSet(setNumber: Int) {
+        timerTask?.cancel()
+        timerTask = nil
+        intervalTask?.cancel()
+        intervalTask = nil
         elapsedSeconds = 0
         phase = .tracking(setNumber: setNumber)
         timerTask = Task {
@@ -152,6 +156,8 @@ struct WorkoutStartView: View {
         if isFinishing {
             phase = .summary
         } else {
+            intervalTask?.cancel()
+            intervalTask = nil
             intervalSeconds = 0
             phase = .interval(setNumber: setNum + 1)
             intervalTask = Task {
