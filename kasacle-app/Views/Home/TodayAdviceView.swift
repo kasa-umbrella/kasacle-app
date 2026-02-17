@@ -7,16 +7,34 @@
 
 import SwiftUI
 
-/// 今日のアドバイスをランダムに返す（同じ日は同じアドバイス）
+// MARK: - アドバイスデータ
+
+private struct Advice {
+    let icon: String
+    let message: String
+}
+
+/// 曜日に応じたアドバイスを返す
 private func todayAdvice() -> Advice {
-    let calendar = Calendar.current
-    let components = calendar.dateComponents([.year, .month, .day], from: .now)
-
-    // 日付をシード値として使用（同じ日は同じアドバイス）
-    let seed = components.year! * 10000 + components.month! * 100 + components.day!
-    let index = abs(seed) % allAdvices.count
-
-    return allAdvices[index]
+    let weekday = Calendar.current.component(.weekday, from: .now)
+    switch weekday {
+    case 1: // 日
+        return Advice(icon: "moon.zzz.fill",   message: "今日はしっかり休養しましょう。睡眠と栄養補給が筋肉の回復を助けます。")
+    case 2: // 月
+        return Advice(icon: "flame.fill",       message: "週の始まり！胸・肩・三頭筋のプッシュ系トレーニングでスタートダッシュを切りましょう。")
+    case 3: // 火
+        return Advice(icon: "figure.walk",      message: "昨日の疲れを感じたら軽いウォーキングやストレッチで回復を促しましょう。")
+    case 4: // 水
+        return Advice(icon: "dumbbell.fill",    message: "背中・二頭筋のプル系トレーニングに最適な曜日。しっかり追い込みましょう！")
+    case 5: // 木
+        return Advice(icon: "drop.fill",        message: "水分補給を意識しながら軽めの有酸素運動を取り入れてみましょう。")
+    case 6: // 金
+        return Advice(icon: "bolt.fill",        message: "週末前の追い込みデー！脚・臀部のトレーニングで代謝をアップさせましょう。")
+    case 7: // 土
+        return Advice(icon: "heart.fill",       message: "週末はアクティブレスト。ヨガやストレッチで全身をケアするのがおすすめです。")
+    default:
+        return Advice(icon: "star.fill",        message: "今日も一歩一歩、着実に積み上げていきましょう！")
+    }
 }
 
 // MARK: - TodayAdviceView
