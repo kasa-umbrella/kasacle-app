@@ -1,0 +1,185 @@
+//
+//  WorkoutCalendarView.swift
+//  kasacle-app
+//
+//  Created by 笠原涼太 on 2026/02/13.
+//
+
+import SwiftUI
+import SwiftData
+
+// MARK: - WorkoutCalendarView
+
+struct WorkoutCalendarView: View {
+    /// 表示中の年月
+    @State private var displayMonth: Date = Calendar.current.startOfDay(for: .now)
+
+    /// SwiftData から取得したワークアウト実績
+    @Query private var records: [WorkoutRecord]
+
+    private let calendar = Calendar.current
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
+    private let weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"]
+
+    // 表示月のワークアウト日セット
+    private var workoutDays: Set<Date> {
+        Set(records.map { calendar.startOfDay(for: $0.date) })
+    }
+
+    // 表示月の1日
+    private var firstDayOfMonth: Date {
+        let comps = calendar.dateComponents([.year, .month], from: displayMonth)
+        return calendar.date(from: comps)!
+    }
+
+    // グリッドに並べる日付（前月の余白 nil + 当月の日付）
+    private var gridDays: [Date?] {
+        let weekdayOfFirst = calendar.component(.weekday, from: firstDayOfMonth) - 1
+        let daysInMonth = calendar.range(of: .day, in: .month, for: firstDayOfMonth)!.count
+        var days: [Date?] = Array(repeating: nil, count: weekdayOfFirst)
+        for day in 1...daysInMonth {
+            let date = calendar.date(byAdding: .day, value: day - 1, to: firstDayOfMonth)!
+            days.append(date)
+        }
+        return days
+    }
+
+    private var monthTitle: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "yyyy年M月"
+        return f.string(from: displayMonth)
+    }
+
+    private var isCurrentMonth: Bool {
+        calendar.isDate(displayMonth, equalTo: .now, toGranularity: .month)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // ─── ヘッダー（月移動） ───────────────────────────
+            HStack {
+                Button {
+                    changeMonth(by: -1)
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppColor.onBrand)
+                        .padding(8)
+                }
+
+                Spacer()
+
+                Text(monthTitle)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(AppColor.onBrand)
+
+                Spacer()
+
+                Button {
+                    changeMonth(by: 1)
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(isCurrentMonth ? AppColor.onBrand.opacity(0.3) : AppColor.onBrand)
+                        .padding(8)
+                }
+                .disabled(isCurrentMonth)
+            }
+            .padding(.horizontal, 8)
+            .padding(.bottom, 12)
+
+            // ─── 曜日ラベル ───────────────────────────────────
+            LazyVGrid(columns: columns, spacing: 0) {
+                ForEach(weekdayLabels, id: \.self) { label in
+                    Text(label)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(
+                            label == "日"
+                                ? Color(red: 1, green: 0.55, blue: 0.55).opacity(0.85)
+                                : label == "土"
+                                    ? Color(red: 0.55, green: 0.85, blue: 1).opacity(0.85)
+                                    : AppColor.onBrand.opacity(0.6)
+                        )
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 8)
+                }
+            }
+
+            // ─── 日付グリッド ──────────────────────────────────
+            LazyVGrid(columns: columns, spacing: 6) {
+                ForEach(Array(gridDays.enumerated()), id: \.offset) { _, date in
+                    if let date {
+                        DayCell(
+                            date: date,
+                            hasWorkout: workoutDays.contains(calendar.startOfDay(for: date)),
+                            isToday: calendar.isDateInToday(date)
+                        )
+                    } else {
+                        Color.clear
+                            .aspectRatio(1, contentMode: .fit)
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.12))
+        )
+    }
+
+    private func changeMonth(by value: Int) {
+        guard let next = Calendar.current.date(
+            byAdding: .month, value: value, to: displayMonth
+        ) else { return }
+        // 未来月には進めない
+        if value > 0, Calendar.current.compare(next, to: .now, toGranularity: .month) == .orderedDescending {
+            return
+        }
+        displayMonth = next
+    }
+}
+
+// MARK: - DayCell
+
+private struct DayCell: View {
+    let date: Date
+    let hasWorkout: Bool
+    let isToday: Bool
+
+    private var dayNumber: String {
+        "\(Calendar.current.component(.day, from: date))"
+    }
+
+    var body: some View {
+        ZStack {
+            if hasWorkout {
+                // 実績あり：メインカラーより少し明るい円
+                Circle()
+                    .fill(Color.white.opacity(0.25))
+            }
+            if isToday {
+                // 今日：枠線
+                Circle()
+                    .strokeBorder(AppColor.onBrand, lineWidth: 1.5)
+            }
+
+            Text(dayNumber)
+                .font(.system(size: 13, weight: hasWorkout ? .bold : .regular))
+                .foregroundStyle(
+                    hasWorkout
+                        ? AppColor.onBrand
+                        : AppColor.onBrand.opacity(0.55)
+                )
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+}
+
+#Preview {
+    WorkoutCalendarView()
+        .padding()
+        .background(AppColor.brand)
+        .modelContainer(for: WorkoutRecord.self, inMemory: true)
+}
