@@ -26,11 +26,10 @@ struct MainView: View {
 
                         // ─── タイトルロゴ ─────────────────────────
                         VStack(spacing: 6) {
-                            Text("KASACLE")
-                                .font(.system(size: 36, weight: .black))
-                                .tracking(8)
-                                .foregroundStyle(AppColor.brand)
-
+                            Image("kasacle-logo-horiz-blue")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 40)
                             Text("筋トレ管理")
                                 .font(.system(size: 13, weight: .medium))
                                 .tracking(4)

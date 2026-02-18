@@ -17,13 +17,10 @@ struct SplashView: View {
             Color(red: 0 / 255, green: 103 / 255, blue: 192 / 255)
                 .ignoresSafeArea()
 
-            Text("KASACLE")
-                .font(.system(size: 48, weight: .black, design: .default))
-                .tracking(8)
-                // 薄い水色（onBrand 相当）
-                .foregroundStyle(Color(red: 235 / 255, green: 247 / 255, blue: 255 / 255).opacity(0.75))
-                .opacity(titleOpacity)
-                .scaleEffect(titleScale)
+                                        Image("kasacle-logo-horiz-blue")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 40)
         }
         .onAppear {
             withAnimation(.easeOut(duration: 0.6)) {
