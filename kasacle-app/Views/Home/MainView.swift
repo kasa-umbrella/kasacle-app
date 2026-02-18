@@ -5,8 +5,8 @@
 //  Created by 笠原涼太 on 2026/02/13.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 // MARK: - MainView
 
@@ -25,13 +25,13 @@ struct MainView: View {
                     VStack(spacing: 20) {
 
                         // ─── タイトルロゴ ─────────────────────────
-                        VStack(spacing: 6) {
+                        VStack(spacing: 10) {
                             Image("kasacle-logo-horiz-blue")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(height: 40)
+                                .frame(height: 50)
                             Text("筋トレ管理")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: 16, weight: .medium))
                                 .tracking(4)
                                 .foregroundStyle(AppColor.onSurface.opacity(0.5))
                         }

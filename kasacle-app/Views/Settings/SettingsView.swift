@@ -84,8 +84,14 @@ struct ExerciseListView: View {
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundStyle(AppColor.onSurface)
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                deleteExercise(exercise)
+                            } label: {
+                                Label("削除", systemImage: "trash")
+                            }
+                        }
                     }
-                    .onDelete(perform: deleteExercises)
                 } footer: {
                     if exercises.isEmpty {
                         Text("種目がありません。右上の＋ボタンから追加してください。")
@@ -131,10 +137,8 @@ struct ExerciseListView: View {
         try? context.save()
     }
 
-    private func deleteExercises(at offsets: IndexSet) {
-        for index in offsets {
-            context.delete(exercises[index])
-        }
+    private func deleteExercise(_ exercise: CustomExercise) {
+        context.delete(exercise)
         try? context.save()
     }
 }

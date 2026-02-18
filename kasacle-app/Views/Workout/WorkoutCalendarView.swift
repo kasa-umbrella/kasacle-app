@@ -11,7 +11,7 @@ import SwiftData
 // MARK: - WorkoutCalendarView
 
 struct WorkoutCalendarView: View {
-    /// 日付がタップされたときに呼ばれるコールバック（記録がある日のみ）
+    /// 日付がタップされたときに呼ばれるコールバック
     var onDayTapped: ((Date) -> Void)? = nil
 
     /// 表示中の年月
@@ -117,9 +117,7 @@ struct WorkoutCalendarView: View {
                     if let date {
                         let hasWorkout = workoutDays.contains(calendar.startOfDay(for: date))
                         Button {
-                            if hasWorkout {
-                                onDayTapped?(calendar.startOfDay(for: date))
-                            }
+                            onDayTapped?(calendar.startOfDay(for: date))
                         } label: {
                             DayCell(
                                 date: date,

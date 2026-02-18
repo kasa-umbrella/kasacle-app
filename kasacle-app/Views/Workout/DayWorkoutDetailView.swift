@@ -51,16 +51,23 @@ struct DayWorkoutDetailView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 // ─── 記録リスト ──────────────────────────────
-                ScrollView {
-                    VStack(spacing: 14) {
-                        ForEach(recordsForDay) { record in
-                            WorkoutRecordCard(record: record)
-                        }
+                List {
+                    ForEach(recordsForDay) { record in
+                        WorkoutRecordCard(record: record)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 7, leading: 20, bottom: 7, trailing: 20))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    context.delete(record)
+                                } label: {
+                                    Label("削除", systemImage: "trash")
+                                }
+                            }
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 16)
-                    .padding(.bottom, 32)
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
         }
         .navigationTitle(titleText)
