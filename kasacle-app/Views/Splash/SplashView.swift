@@ -14,13 +14,22 @@ struct SplashView: View {
     var body: some View {
         ZStack {
             // 背景：メインカラー #0067c0
-            Color(red: 0 / 255, green: 103 / 255, blue: 192 / 255)
+            AppColor.brand
                 .ignoresSafeArea()
 
-                                        Image("kasacle-logo-horiz-blue")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 40)
+            VStack(spacing: 20) {
+                Image("kasacle-logo-horiz-white")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 70)
+                    .opacity(titleOpacity)
+                    .scaleEffect(titleScale)
+
+                Text("筋トレ管理")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .opacity(titleOpacity)
+            }
         }
         .onAppear {
             withAnimation(.easeOut(duration: 0.6)) {
