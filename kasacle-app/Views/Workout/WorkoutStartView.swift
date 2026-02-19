@@ -5,8 +5,8 @@
 //  Created by 笠原涼太 on 2026/02/13.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 // MARK: - 画面フェーズ
 
@@ -21,6 +21,12 @@ private enum WorkoutPhase: Equatable {
     case interval(setNumber: Int)
     /// 全セット完了・サマリー
     case summary
+}
+
+private enum RetainedWeightInput: Equatable {
+    case none
+    case bodyweight
+    case value(Double)
 }
 
 // MARK: - WorkoutStartView
@@ -47,6 +53,7 @@ struct WorkoutStartView: View {
 
     // ─── セット記録（完了分） ─────────────────────────────
     @State private var completedSets: [WorkoutSet] = []
+    @State private var retainedWeightInput: RetainedWeightInput = .none
 
     var body: some View {
         ZStack {
@@ -75,9 +82,16 @@ struct WorkoutStartView: View {
                     setNumber: setNum,
                     durationSeconds: duration,
                     isFinishing: isFinishing,
-                    onConfirm: { reps, weight in
-                        confirmSet(setNum: setNum, reps: reps, weight: weight,
-                                   duration: duration, isFinishing: isFinishing)
+                    initialWeightInput: retainedWeightInput,
+                    onConfirm: { reps, weight, isBodyweight in
+                        confirmSet(
+                            setNum: setNum,
+                            reps: reps,
+                            weight: weight,
+                            isBodyweight: isBodyweight,
+                            duration: duration,
+                            isFinishing: isFinishing
+                        )
                     }
                 )
 
@@ -94,7 +108,10 @@ struct WorkoutStartView: View {
                     exerciseName: selectedExercise ?? "",
                     sets: completedSets,
                     onSave: saveAndDismiss,
-                    onDiscard: { dismiss() }
+                    onDiscard: {
+                        retainedWeightInput = .none
+                        dismiss()
+                    }
                 )
             }
         }
@@ -107,17 +124,18 @@ struct WorkoutStartView: View {
 
     private var navigationTitle: String {
         switch phase {
-        case .setup:             return "ワークアウト開始"
-        case .tracking(let n):  return "セット \(n) 計測中"
+        case .setup: return "ワークアウト開始"
+        case .tracking(let n): return "セット \(n) 計測中"
         case .logging(let n, _, _): return "セット \(n) 記録"
-        case .interval:         return "インターバル"
-        case .summary:          return "セッション完了"
+        case .interval: return "インターバル"
+        case .summary: return "セッション完了"
         }
     }
 
     // MARK: - アクション
 
     private func startFirstSet() {
+        retainedWeightInput = .none
         startSet(setNumber: 1)
     }
 
@@ -139,16 +157,29 @@ struct WorkoutStartView: View {
     private func beginLogging(setNum: Int, isFinishing: Bool) {
         timerTask?.cancel()
         timerTask = nil
-        phase = .logging(setNumber: setNum, durationSeconds: elapsedSeconds, isFinishing: isFinishing)
+        phase = .logging(
+            setNumber: setNum, durationSeconds: elapsedSeconds, isFinishing: isFinishing)
     }
 
-    private func confirmSet(setNum: Int, reps: Int, weight: Double?,
-                            duration: Int, isFinishing: Bool) {
-        let set = WorkoutSet(setNumber: setNum, reps: reps, weightKg: weight,
-                             durationSeconds: duration)
+    private func confirmSet(
+        setNum: Int, reps: Int, weight: Double?, isBodyweight: Bool,
+        duration: Int, isFinishing: Bool
+    ) {
+        if setNum == 1 {
+            if isBodyweight {
+                retainedWeightInput = .bodyweight
+            } else if let weight {
+                retainedWeightInput = .value(weight)
+            }
+        }
+
+        let set = WorkoutSet(
+            setNumber: setNum, reps: reps, weightKg: weight,
+            durationSeconds: duration)
         completedSets.append(set)
 
         if isFinishing {
+            retainedWeightInput = .none
             phase = .summary
         } else {
             intervalTask?.cancel()
@@ -212,7 +243,8 @@ private struct SetupView: View {
 
     private var exercisesForGroup: [CustomExercise] {
         guard let group = selectedGroup else { return [] }
-        return allExercises
+        return
+            allExercises
             .filter { $0.muscleGroupName == group.name }
             .sorted { $0.order < $1.order }
     }
@@ -260,7 +292,9 @@ private struct SetupView: View {
                 Button(action: onStart) {
                     Label("開始する", systemImage: "flame.fill")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(canStart ? AppColor.onBrand : AppColor.onSurface.opacity(0.35))
+                        .foregroundStyle(
+                            canStart ? AppColor.onBrand : AppColor.onSurface.opacity(0.35)
+                        )
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 18)
                         .background(
@@ -350,18 +384,45 @@ private struct LoggingView: View {
     let setNumber: Int
     let durationSeconds: Int
     let isFinishing: Bool
-    let onConfirm: (Int, Double?) -> Void
+    let initialWeightInput: RetainedWeightInput
+    let onConfirm: (Int, Double?, Bool) -> Void
 
     @State private var reps: Int = 10
     @State private var weight: String = ""
     @State private var isBodyweight: Bool = false
+
+    init(
+        setNumber: Int,
+        durationSeconds: Int,
+        isFinishing: Bool,
+        initialWeightInput: RetainedWeightInput,
+        onConfirm: @escaping (Int, Double?, Bool) -> Void
+    ) {
+        self.setNumber = setNumber
+        self.durationSeconds = durationSeconds
+        self.isFinishing = isFinishing
+        self.initialWeightInput = initialWeightInput
+        self.onConfirm = onConfirm
+
+        switch initialWeightInput {
+        case .none:
+            _weight = State(initialValue: "")
+            _isBodyweight = State(initialValue: false)
+        case .bodyweight:
+            _weight = State(initialValue: "")
+            _isBodyweight = State(initialValue: true)
+        case .value(let value):
+            _weight = State(initialValue: String(format: "%.1f", value))
+            _isBodyweight = State(initialValue: false)
+        }
+    }
 
     private var parsedWeight: Double? {
         isBodyweight ? nil : Double(weight)
     }
 
     private var canConfirm: Bool {
-        reps > 0 && (isBodyweight || !weight.isEmpty)
+        reps > 0 && (isBodyweight || parsedWeight != nil)
     }
 
     var body: some View {
@@ -427,14 +488,17 @@ private struct LoggingView: View {
 
                 // ─── 確定ボタン ────────────────────────────
                 Button {
-                    onConfirm(reps, parsedWeight)
+                    onConfirm(reps, parsedWeight, isBodyweight)
                 } label: {
                     Label(
                         isFinishing ? "完了して終わる" : "記録してインターバルへ",
-                        systemImage: isFinishing ? "checkmark.circle.fill" : "arrow.right.circle.fill"
+                        systemImage: isFinishing
+                            ? "checkmark.circle.fill" : "arrow.right.circle.fill"
                     )
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(canConfirm ? AppColor.onBrand : AppColor.onSurface.opacity(0.35))
+                    .foregroundStyle(
+                        canConfirm ? AppColor.onBrand : AppColor.onSurface.opacity(0.35)
+                    )
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(
@@ -528,8 +592,8 @@ private struct SummaryView: View {
                 // ─── 合計サマリー ──────────────────────────
                 HStack(spacing: 16) {
                     InfoBadge(icon: "list.number", label: "総セット", value: "\(sets.count)")
-                    InfoBadge(icon: "repeat",       label: "総回数",   value: "\(totalReps)回")
-                    InfoBadge(icon: "timer",        label: "総時間",   value: formatTime(totalTime))
+                    InfoBadge(icon: "repeat", label: "総回数", value: "\(totalReps)回")
+                    InfoBadge(icon: "timer", label: "総時間", value: formatTime(totalTime))
                 }
 
                 // ─── セット別詳細 ──────────────────────────
@@ -679,7 +743,9 @@ private struct ExerciseRow: View {
             .padding(.vertical, 13)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isSelected ? AppColor.brand.opacity(0.08) : AppColor.onSurface.opacity(0.04))
+                    .fill(
+                        isSelected ? AppColor.brand.opacity(0.08) : AppColor.onSurface.opacity(0.04)
+                    )
             )
             .animation(.easeInOut(duration: 0.15), value: isSelected)
         }
@@ -749,5 +815,6 @@ private func formatTime(_ seconds: Int) -> String {
     NavigationStack {
         WorkoutStartView()
     }
-    .modelContainer(for: [WorkoutRecord.self, WorkoutSession.self, WorkoutSet.self], inMemory: true)
+    .modelContainer(
+        for: [WorkoutRecord.self, WorkoutSession.self, WorkoutSet.self], inMemory: true)
 }

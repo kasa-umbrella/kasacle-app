@@ -5,8 +5,8 @@
 //  Created by 笠原涼太 on 2026/02/13.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 @main
 struct kasacle_appApp: App {
@@ -14,6 +14,9 @@ struct kasacle_appApp: App {
         WindowGroup {
             RootView()
         }
-        .modelContainer(for: [WorkoutRecord.self, WorkoutSession.self, WorkoutSet.self, CustomExercise.self])
+        .modelContainer(for: [
+            WorkoutRecord.self, WorkoutSession.self, WorkoutSet.self, CustomExercise.self,
+            LlmMessageRecord.self,
+        ])
     }
 }

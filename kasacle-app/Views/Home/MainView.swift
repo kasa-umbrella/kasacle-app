@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - MainView
 
 struct MainView: View {
-    /// カレンダーでタップされた日付（nilなら遷移しない）
+    /// カレンダーでタップされた日付
     @State private var selectedDate: Date? = nil
 
     var body: some View {
