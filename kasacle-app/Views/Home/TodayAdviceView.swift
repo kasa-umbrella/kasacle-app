@@ -29,35 +29,35 @@ struct TodayAdviceView: View {
             // 日付
             Text(Self.dateFormatter.string(from: .now))
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(AppColor.onBrand.opacity(0.7))
+                .foregroundStyle(Color.secondary)
 
             HStack(alignment: .center, spacing: 14) {
                 // アイコン
                 Image(systemName: "sparkles")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(AppColor.onBrand)
+                    .foregroundStyle(AppColor.brand)
                     .frame(width: 32)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("今日のアドバイス")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(AppColor.onBrand.opacity(0.8))
+                        .foregroundStyle(AppColor.brand)
                     Text(generatedMessage ?? fallbackMessage)
                         .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(AppColor.onBrand)
+                        .foregroundStyle(Color.primary)
                         .lineSpacing(4)
                         .fixedSize(horizontal: false, vertical: true)
 
                     if let adviceErrorDetail {
                         Text(adviceErrorDetail)
                             .font(.system(size: 12, weight: .regular))
-                            .foregroundStyle(AppColor.onBrand.opacity(0.72))
+                            .foregroundStyle(Color.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     if isGenerating {
                         ProgressView()
-                            .tint(AppColor.onBrand)
+                            .tint(AppColor.brand)
                             .scaleEffect(0.8, anchor: .leading)
                     }
                 }
@@ -67,8 +67,8 @@ struct TodayAdviceView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(AppColor.brand)
-                .shadow(color: AppColor.brand.opacity(0.35), radius: 12, x: 0, y: 6)
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
         )
         .task {
             await generateAdviceIfNeeded()
