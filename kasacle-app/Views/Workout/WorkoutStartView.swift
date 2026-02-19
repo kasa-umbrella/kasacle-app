@@ -523,6 +523,9 @@ private struct IntervalView: View {
     let intervalSeconds: Int
     let onNextSet: () -> Void
 
+    @State private var restMessage: String?
+    @State private var isGenerating = false
+
     var body: some View {
         VStack(spacing: 32) {
             Spacer()
@@ -537,9 +540,17 @@ private struct IntervalView: View {
                 .contentTransition(.numericText())
                 .animation(.linear(duration: 0.3), value: intervalSeconds)
 
-            Text("休憩中…")
-                .font(.system(size: 15))
-                .foregroundStyle(AppColor.onSurface.opacity(0.4))
+            if isGenerating {
+                ProgressView()
+                    .tint(AppColor.brand)
+            } else {
+                Text(restMessage ?? "休憩中…")
+                    .font(.system(size: 15))
+                    .foregroundStyle(AppColor.onSurface.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             Spacer()
 
@@ -556,6 +567,26 @@ private struct IntervalView: View {
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
+        }
+        .task {
+            await generateRestMessage()
+        }
+    }
+
+    @MainActor
+    private func generateRestMessage() async {
+        isGenerating = true
+        defer { isGenerating = false }
+
+        let prompt = "筋トレのインターバル中の短い励ましメッセージを1つ日本語で。出力条件: 鉤括弧（「」『』）禁止、改行禁止、本文のみ。"
+        do {
+            var model = WorkoutAdviceModel()
+            let message = try await model.generateAdvice(from: prompt)
+            if !message.isEmpty {
+                restMessage = message
+            }
+        } catch {
+            print("[FoundationModels] rest message generation failed: \(error)")
         }
     }
 }

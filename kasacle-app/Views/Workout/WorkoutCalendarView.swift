@@ -137,11 +137,8 @@ struct WorkoutCalendarView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(AppColor.onSurface.opacity(0.04))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .strokeBorder(AppColor.onSurface.opacity(0.08), lineWidth: 1)
-                )
+                .fill(Color.white)
+                .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 4)
         )
     }
 
