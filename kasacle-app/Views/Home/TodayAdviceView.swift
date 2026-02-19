@@ -90,6 +90,9 @@ struct TodayAdviceView: View {
             if !message.isEmpty {
                 generatedMessage = message
             }
+        } catch WorkoutAdviceError.modelUnavailable {
+            generatedMessage = WorkoutAdviceError.modelUnavailable.errorDescription
+            adviceErrorDetail = nil
         } catch {
             generatedMessage = nil
             adviceErrorDetail = "原因: \(error.localizedDescription)"

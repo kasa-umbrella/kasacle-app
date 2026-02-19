@@ -575,6 +575,8 @@ private struct IntervalView: View {
 
     @MainActor
     private func generateRestMessage() async {
+        guard WorkoutAdviceModel.isAvailable else { return }
+
         isGenerating = true
         defer { isGenerating = false }
 

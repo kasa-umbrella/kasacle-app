@@ -37,11 +37,27 @@ final class LlmMessageRecord {
     }
 }
 
+// MARK: - WorkoutAdviceError
+
+enum WorkoutAdviceError: Error, LocalizedError {
+    case modelUnavailable
+
+    var errorDescription: String? {
+        "Apple Intelligence はこのデバイスまたは地域では利用できないため、AIアドバイスを生成できません。"
+    }
+}
+
 // MARK: - WorkoutAdviceModel
 
 @MainActor
 struct WorkoutAdviceModel {
     private var session: LanguageModelSession
+
+    /// Foundation Models が利用可能かどうかを返す
+    static var isAvailable: Bool {
+        if case .available = SystemLanguageModel.default.availability { return true }
+        return false
+    }
 
     init() {
         session = LanguageModelSession(
@@ -56,6 +72,10 @@ struct WorkoutAdviceModel {
     mutating func generateAdvice(from userPrompt: String, context: ModelContext? = nil) async throws
         -> String
     {
+        guard WorkoutAdviceModel.isAvailable else {
+            throw WorkoutAdviceError.modelUnavailable
+        }
+
         if let context {
             context.insert(LlmMessageRecord(role: .user, message: userPrompt))
         }
